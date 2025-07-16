@@ -1,5 +1,4 @@
 --only-binary :all:
-python-3.12.3
 streamlit==1.46.1
 joblib==1.5.1
 matplotlib==3.8.0
