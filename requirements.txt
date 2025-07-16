@@ -1,7 +1,7 @@
-streamlit==1.30.0
-joblib==1.4.2
-numpy==1.26.4
-pandas==2.2.2
+--only-binary :all:
+python-3.12.3
+streamlit==1.46.1
+joblib==1.5.1
 matplotlib==3.8.0
-scikit-learn==1.5.1
-shap==0.45.1
+shap==0.45.0
+numpy==1.24.4
