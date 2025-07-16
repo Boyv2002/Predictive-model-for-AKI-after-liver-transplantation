@@ -14,16 +14,16 @@ best_threshold = svm_data['best_threshold']
 scaler = joblib.load('scaler.pkl')
 # 特征范围定义（根据提供的特征范围和数据类型）
 feature_ranges = {
-    "Hypertension": {"type": "categorical", "options": [0, 1]},
-    "BMI": {"type": "numerical", "min": 15.81, "max": 42.97, "default": 21.13},
-    "DBIL": {"type": "numerical", "min": 1.1, "max": 598.8, "default": 16.75},
-    "Creatinine": {"type": "numerical", "min": 33, "max": 342, "default": 83.00},
-    "Hb": {"type": "numerical", "min": 25, "max": 174, "default": 83.99},
-    "UONHP": {"type": "numerical", "min": 20, "max": 4750, "default": 1040.00},
-    "UO": {"type": "numerical", "min": 0, "max": 16220, "default": 1580.00},
-    "VIS": {"type": "numerical", "min": -2, "max": 28, "default": 10},
-    "OT": {"type": "numerical", "min":5, "max": 19.5, "default":8.48},
-    "Plasma": {"type": "numerical", "min": 0, "max": 4210, "default": 941.42}
+    "Hypertension": {"type": "categorical", "options": [0, 1], 'default': 0 },
+    "BMI": {"type": "numerical", "min": 15.81, "max": 42.97, "default": 19.53},
+    "DBIL": {"type": "numerical", "min": 1.1, "max": 598.8, "default": 256.65},
+    "Creatinine": {"type": "numerical", "min": 33, "max": 342, "default": 55.71},
+    "Hb": {"type": "numerical", "min": 25, "max": 174, "default": 77},
+    "UONHP": {"type": "numerical", "min": 20, "max": 4750, "default": 300},
+    "UO": {"type": "numerical", "min": 0, "max": 16220, "default": 1110},
+    "VIS": {"type": "numerical", "min": -2, "max": 28, "default": 5},
+    "OT": {"type": "numerical", "min":5, "max": 19.5, "default":9},
+    "Plasma": {"type": "numerical", "min": 0, "max": 4210, "default": 1000}
 }
 
 # Streamlit 界面
@@ -44,6 +44,7 @@ for feature, properties in feature_ranges.items():
         value = st.selectbox(
             label=f"{feature} (Select a value)",
             options=properties["options"],
+            index=properties["options"].index(properties["default"])
         )
     feature_values.append(value)
 
@@ -86,10 +87,12 @@ if st.button("Predict", key="unique_predict_button"):
 
     # 计算 SHAP 值（使用标准化后的数据）
     # 创建背景数据（使用特征默认值，代表数据分布）
-    background_defaults = [
-    props["default"] if props["type"] == "numerical" else props["options"][0]
-    for props in feature_ranges.values()
- ]
+    background_defaults = []
+    for feature, props in feature_ranges.items():
+        # 为分类特征显式设置默认值为0（根据您的网页默认行为）
+        if props["type"] == "categorical" and "default" not in props:
+            props["default"] = 0  # 强制设置分类特征默认值
+        background_defaults.append(props["default"])
     background_data = np.array([background_defaults])
     background_scaled = scaler.transform(background_data)
 
@@ -121,20 +124,17 @@ if st.button("Predict", key="unique_predict_button"):
         expected_value_to_use = explainer.expected_value[class_index]
     else:
         expected_value_to_use = explainer.expected_value
-
     # 生成并显示SHAP力图
     plt.switch_backend('agg')  # 添加后端设置确保图形正确渲染
-    plt.figure(figsize=(16, 8))  # 增大图像尺寸以容纳所有特征
+    plt.figure(figsize=(20, 10))  # 增大图像尺寸以容纳所有特征
     # 生成并显示SHAP力图
     shap_fig = shap.force_plot(
     expected_value_to_use,
     shap_values_to_use,
-    features=shap_df.iloc[0],
-    feature_names=list(feature_ranges.keys()),
+    shap_df,
     matplotlib=True,
-    show=False,
-)
-    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=600)
+    )
+    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=300)
     plt.close()
     st.image("shap_force_plot.png")
     
